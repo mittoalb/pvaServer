@@ -182,38 +182,38 @@ class AdSimServer:
         'timeStamp' : pva.PvTimeStamp()
     }
 
-    def __init__(self, inputDirectory, inputFile, mmapMode, hdfDataset, hdfCompressionMode, frameRate, nFrames, cacheSize, nx, ny, datatype, minimum, maximum, runtime, channelName, notifyPv, notifyPvValue, metadataPv, startDelay, reportPeriod, disableCurses):
+    def __init__(self, args):
         self.lock = threading.Lock()
         self.deltaT = 0
         self.cacheTimeout = self.CACHE_TIMEOUT
-        if frameRate > 0:
-            self.deltaT = 1.0/frameRate
+        if args.frame_rate > 0:
+            self.deltaT = 1.0/args.frame_rate
             self.cacheTimeout = max(self.CACHE_TIMEOUT, self.deltaT)
-        self.runtime = runtime
-        self.reportPeriod = reportPeriod 
+        self.runtime = args.runtime
+        self.reportPeriod = args.report_period 
         self.metadataIoc = None
         self.frameGeneratorList = []
-        self.frameCacheSize = max(cacheSize, self.MIN_CACHE_SIZE)
-        self.nFrames = nFrames
+        self.frameCacheSize = max(args.cache_size, self.MIN_CACHE_SIZE)
+        self.nFrames = args.n_frames
 
         inputFiles = []
-        if inputDirectory is not None:
-            inputFiles = [os.path.join(inputDirectory, f) for f in os.listdir(inputDirectory) if os.path.isfile(os.path.join(inputDirectory, f))]
-        if inputFile is not None:
-            inputFiles.append(inputFile)
+        if args.input_directory is not None:
+            inputFiles = [os.path.join(args.input_directory, f) for f in os.listdir(args.input_directory) if os.path.isfile(os.path.join(args.input_directory, f))]
+        if args.input_file is not None:
+            inputFiles.append(args.input_file)
         allowedHdfExtensions = ['h5', 'hdf', 'hdf5']
         for f in inputFiles:
             ext = f.split('.')[-1]
             if ext in allowedHdfExtensions:
-                self.frameGeneratorList.append(HdfFileGenerator(f, hdfDataset, hdfCompressionMode))
+                self.frameGeneratorList.append(HdfFileGenerator(f, args.hdf_dataset, args.hdf_compression_mode))
             else:
-                self.frameGeneratorList.append(NumpyFileGenerator(f, mmapMode))
+                self.frameGeneratorList.append(NumpyFileGenerator(f, args.input_file))
 
         if not self.frameGeneratorList:
-            nf = nFrames
+            nf = args.n_frames
             if nf <= 0:
                 nf = self.frameCacheSize
-            self.frameGeneratorList.append(NumpyRandomGenerator(nf, nx, ny, datatype, minimum, maximum))
+            self.frameGeneratorList.append(NumpyRandomGenerator(nf, args.n_x_pixels, args.n_y_pixels, args.datatype, args.minimum, args.maximum))
 
         self.nInputFrames = 0
         for fg in self.frameGeneratorList:
@@ -223,25 +223,25 @@ class AdSimServer:
             self.nInputFrames = min(self.nFrames, self.nInputFrames)
 
         fg = self.frameGeneratorList[0]
-        self.frameRate = frameRate
+        self.frameRate = args.frame_rate
         self.uncompressedImageSize = util.IntWithUnits(fg.getUncompressedFrameSize(), 'B')
         self.compressedImageSize = util.IntWithUnits(fg.getCompressedFrameSize(), 'B')
         self.compressedDataRate = util.FloatWithUnits(self.compressedImageSize*self.frameRate/self.BYTES_IN_MEGABYTE, 'MBps')
         self.uncompressedDataRate = util.FloatWithUnits(self.uncompressedImageSize*self.frameRate/self.BYTES_IN_MEGABYTE, 'MBps')
 
-        self.channelName = channelName
+        self.channelName = args.channel_name
         self.pvaServer = pva.PvaServer()
-        self.setupMetadataPvs(metadataPv)
+        self.setupMetadataPvs(args.metadata_pv)
         self.pvaServer.addRecord(self.channelName, pva.NtNdArray(), None)
 
-        if notifyPv and notifyPvValue:
+        if args.notify_pv and args.notify_pv_value:
             try:
                 time.sleep(self.NOTIFICATION_DELAY)
-                notifyChannel = pva.Channel(notifyPv, pva.CA)
-                notifyChannel.put(notifyPvValue)
-                print(f'Set notification PV {notifyPv} to {notifyPvValue}')
+                notifyChannel = pva.Channel(args.notify_pv, pva.CA)
+                notifyChannel.put(args.notify_pv_value)
+                print(f'Set notification PV {args.notify_pv} to {args.notify_pv_value}')
             except Exception as ex:
-                print(f'Could not set notification PV {notifyPv} to {notifyPvValue}: {ex}')
+                print(f'Could not set notification PV {args.notify_pv} to {args.notify_pv_value}: {ex}')
 
         # Use PvObjectQueue if cache size is too small for all input frames
         # Otherwise, simple dictionary is good enough
@@ -260,11 +260,11 @@ class AdSimServer:
         self.nPublishedFrames = 0
         self.startTime = 0
         self.lastPublishedTime = 0
-        self.startDelay = startDelay
+        self.startDelay = args.start_delay
         self.isDone = False
         self.screen = None
         self.screenInitialized = False
-        self.disableCurses = disableCurses
+        self.disableCurses = args.disable_curses
 
     def setupCurses(self):
         screen = None
