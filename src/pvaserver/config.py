@@ -11,11 +11,10 @@ from collections import OrderedDict
 from datetime import datetime
 
 from pvaserver import log
-from pvaserver import util
 from pvaserver import __version__
 
 LOGS_HOME = os.path.join(str(pathlib.Path.home()), 'logs')
-CONFIG_FILE_NAME = os.path.join(str(pathlib.Path.home()), 'logs/energy.conf')
+CONFIG_FILE_NAME = os.path.join(str(pathlib.Path.home()), 'logs/pvaserver.conf')
 
 SECTIONS = OrderedDict()
 
@@ -34,59 +33,124 @@ SECTIONS['general'] = {
         'default': False,
         'help': 'Verbose output',
         'action': 'store_true'},
-    'testing': {
+    'version': {
+        'default': __version__,
+        'action': 'version'},
+    }
+
+
+SECTIONS['server'] = { 
+    'input-directory':{
+        'default': None,
+        'type': str,
+        'help': "Directory containing input files to be streamed; if input directory or input file are not provided, random images will be generated."
+        },
+    'input-file':{
+        'default': None,
+        'type': str,
+        'help': "Input file to be streamed; if input directory or input file are not provided, random images will be generated."
+        },
+    'mmap-mode': {
         'default': False,
-        'help': 'Enable test mode to show new motor positions. The motors will not move',
-        'action': 'store_true'},
-    'force': {
-        'default': False,
-        'help': 'When set the enegy change will occurs without a confirmation request',
+        'help': 'Use NumPy memory map to load the specified input file. This flag typically results in faster startup and lower memory usage for large files.',
         'action': 'store_true'
         },
-    }
-
-SECTIONS['energy'] = {
-    'mode': {
-        'default': 'Mono',
-        'type': str,
-        'help': "beamline energy mode",
-        'choices': ['Mono','Pink']
+    'hdf-dataset': {
+        'default': None,
+        'help': 'HDF5 dataset path. This option must be specified if HDF5 files are used as input, but otherwise it is ignored.',
         },
-    'energy': {
-        'default': -1,
+    'hdf-compression-mode': {
+        'default': False,
+        'help': 'Use compressed data from HDF5 file. By default, data will be uncompressed before streaming it.',
+        'action': 'store_true'
+        },
+    'frame-rate': {
+        'default': 20,
         'type': float,
-        'help': "Desired energy. Default (-1) = Pink beam"
+        'help': "Frames per second (default: 20 fps)"
         },
+    'n-x-pixels': {
+        'default': 256,
+        'type': int,
+        'help': "Number of pixels in x dimension (default: 256 pixels; does not apply if input file is given)",
+        },
+    'n-y-pixels': {
+        'default': 256,
+        'type': int,
+        'help': "Number of pixels in x dimension (default: 256 pixels; does not apply if input file is given)",
+        },
+    'datatype': {
+        'default': 'uint8',
+        'type': str,
+        'help': "Generated datatype. (default: uint8; does not apply if input file is given)",
+        'choices': ['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'float32', 'float64']
+        },
+    'minimum': {
+        'default': None,
+        'type': float,
+        'help': "Minimum generated value (does not apply if input file is given)"
+        },
+    'maximum': {
+        'default': None,
+        'type': float,
+        'help': "Maximum generated value (does not apply if input file is given)"
+        },
+    'n-frames': {
+        'default': 0,
+        'type': int,
+        'help': "Number of different frames to generate from the input sources; if set to <= 0, the server will use all images found in input files, or it will generate enough images to fill up the image cache if no input files were specified. If the requested number of input frames is greater than the cache size, the server will stop publishing after exhausting generated frames; otherwise, the generated frames will be constantly recycled and republished.",
+        },
+    'cache-size': {
+        'default': 1000,
+        'type': int,
+        'help': "Number of different frames to cache (default: 1000); if the cache size is smaller than the number of input frames, the new frames will be constantly regenerated as cached ones are published; otherwise, cached frames will be published over and over again as long as the server is running.",
+        },
+    'runtime': {
+        'default': 300,
+        'type': float,
+        'help': "Server runtime in seconds (default: 300 seconds)"
+        },
+    'channel-name': {
+        'default': 'pvapy:image',
+        'type': str,
+        'help': "Server PVA channel name (default: pvapy:image)",
+        },
+    'notify-pv': {
+        'default': None,
+        'type': str,
+        'help': "CA channel that should be notified on start; for the default Area Detector PVA driver PV that controls image acquisition is 13PVA1:cam1:Acquire",
+        },
+    'notify-pv-value': {
+        'default': 1,
+        'type': str,
+        'help': "Value for the notification channel; for the Area Detector PVA driver PV this should be set to 'Acquire' (default: 1)",
+        },
+    'metadata-pv': {
+        'default': None,
+        'type': str,
+        'help': "Comma-separated list of CA channels that should be contain simulated image metadata values",
+        },
+    'start-delay': {
+        'default': 10.0,
+        'type': float,
+        'help': "Server start delay in seconds (default: 10 seconds)"
+        },
+    'report-period': {
+        'default': 1,
+        'type': int,
+        'help': "Reporting period for publishing frames; if set to <=0 no frames will be reported as published (default: 1)",
+        },
+    'disable-curses': {
+        'default': False,
+        'help': 'Disable curses library screen handling. This is enabled by default, except when logging into standard output is turned on.',
+        'action': 'store_true'
+        },
+
     }
 
-SECTIONS['init'] = {
-    'beamline': {
-        'default': '32id',
-        'type': str,
-        'help': "This parameter is used to select the energy---.json file, e.g. energy2bm.json. This file must be created in the DATA_PATH_LOCAL directory",
-        'choices': ['None','2bm', '7bm', '8id', '20bm', '29id', '32id']
-        },
-    'energyioc-prefix':{
-        'default': '32id:Energy:',
-        'type': str,
-        'help': "The epics IOC hosting the Energy PV, i.e.'2bm:Energy:' "
-        },
-    'n-move': {
-        'default': 16,
-        'type': int,
-        'help': "Number of PVs that will be used in move interpolation; 32id=16, 2bm=16",
-        },
-    'n-pos': {
-        'default': 40,
-        'type': int,
-        'help': "Number of PVs that will be used to store motor position; 32id=40, 2bm=3",
-        },
-    }
+PVASERVER_PARAMS = ('server', )
 
-MONO_PARAMS = ('init','energy', )
-INIT_PARAMS = ('init', )
-
-NICE_NAMES = ('General', 'Energy', 'Init')
+NICE_NAMES = ('General', 'Server')
 
 def get_config_name():
     """Get the command line --config option."""
