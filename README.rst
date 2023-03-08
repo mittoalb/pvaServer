@@ -76,13 +76,13 @@ Open ImageJ and start the EPICS NTNDA Viewer:
 
 then enter the pvaserver channel name, i.e. pvapy:image, and press start:
 
-.. image:: docs/source/img/pva_02.png
+.. image:: docs/source/img/pva_01.png
     :width: 50%
     :align: center
 
 the projection images of the hdf file will diplay in the ImageJ EPICS NTNDA Viewer plugin window:
 
-.. image:: docs/source/img/pva_03.png
+.. image:: docs/source/img/pva_02.png
     :width: 50%
     :align: center
 
