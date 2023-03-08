@@ -33,9 +33,6 @@ SECTIONS['general'] = {
         'default': False,
         'help': 'Verbose output',
         'action': 'store_true'},
-    'version': {
-        'default': __version__,
-        'action': 'version'},
     }
 
 
@@ -148,10 +145,10 @@ SECTIONS['multiple-files'] = {
         'help': "Input folder name containing the images to be streamed."
         },
     'file-format': {
-        'default': 'npy',
+        'default': 'hdf',
         'type': str,
         'help': "File format of the file to be read",
-        'choices': ['npy', 'tiff'],
+        'choices': ['hdf', 'npy', 'tiff'],
         },    
     }
 
@@ -297,7 +294,7 @@ def log_values(args):
     """
     args = args.__dict__
 
-    log.warning('energy status start')
+    log.warning('pvaserver status start')
     for section, name in zip(SECTIONS, NICE_NAMES):
         entries = sorted((k for k in args.keys() if k.replace('_', '-') in SECTIONS[section]))
 
@@ -314,7 +311,7 @@ def log_values(args):
                 elif (value is False):
                     log.warning("  {:<16} {}".format(entry, value))
 
-    log.warning('energy status end')
+    log.warning('pvaserver status end')
 
 def save_params_to_config(args):
     # Update current status in default config file.

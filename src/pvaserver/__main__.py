@@ -12,20 +12,13 @@ from pvaserver import __version__
 
 def init(args):
     if not os.path.exists(str(args.config)):
-        sections = config.INIT_PARAMS
-        config.write(args.config, args=args, sections=sections)
-        dataio.init_preset(args)
+        config.write(args.config)
     else:
         log.error("{0} already exists".format(args.config))
 
 def run_status(args):
 
     config.log_values(args)
-    dataio.log_calibrated_energies(args)
-    pvs.init(args)
-    # update energy.conf
-    sections = config.MONO_PARAMS
-    config.write(args.config, args=args, sections=sections)
 
 def run_sim(args):
 
