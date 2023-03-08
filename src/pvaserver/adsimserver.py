@@ -205,51 +205,41 @@ class AdSimServer:
                 nf = self.frameCacheSize
             self.frameGeneratorList.append(NumpyRandomGenerator(nf, args.n_x_pixels, args.n_y_pixels, args.datatype, args.minimum, args.maximum))
 
-        else:
-            file_path = Path(args.file_name)
-            input_files = []
-            if file_path.is_file():
-                # input_files.append(args.file_name)
-                if args.file_format == 'hdf':
-                    log.info('Found: %s' % args.file_name)
-                    self.frameGeneratorList.append(HdfFileGenerator(args.file_name, args.hdf_dataset, args.hdf_compression_mode))              
-            elif file_path.is_dir():
-                # Add a trailing slash if missing
-                top = os.path.join(args.file_name, '')
-                if args.file_format == 'hdf':
-                    allowed_extensions = ('.h5', '.hdf', '.hdf5')
-                elif args.file_format == 'npy':
+        else: # loading data from file(s)
+            if args.data_stack:
+                file_path = Path(args.file_path)
+                input_files = []
+                top = os.path.join(args.file_path, '')
+                if args.file_format == 'npy':
                     allowed_extensions = ('.npy', '.NPY')
+                elif args.file_format == 'tiff':
+                    allowed_extensions = ('.tiff', '.tif', '.TIFF')
+                else:
+                    log.error('Usupported file format!')
+                    exit()                    
                 input_files = list(filter(lambda x: x.endswith(allowed_extensions), os.listdir(top)))
                 for fname in input_files:
                     if args.file_format == 'npy':
-                        print(input_files)
-                        # self.frameGeneratorList.append(NumpyFileGenerator(fname, args.mmap_mode))
+                        self.frameGeneratorList.append(NumpyFileGenerator(fname, args.mmap_mode))
                     elif args.file_format == 'tiff':
+                        # self.frameGeneratorList.append(TiffFileGenerator(fname, args.mmap_mode))
                         log.error('tiff not supported yet!')
                         exit()
                     else:
-                        print(input_files)
                         log.error('Usupported file format!')
                         exit()
             else:
-                log.error('no valid file found!')
-                exit()
-        # exit()
-        # input_files = []
-        # if args.input_directory is not None:
-        #     input_files = [os.path.join(args.input_directory, f) for f in os.listdir(args.input_directory) if os.path.isfile(os.path.join(args.input_directory, f))]
-        # if args.file_name is not None:
-        #     input_files.append(args.file_name)
-        # allowedHdfExtensions = ['h5', 'hdf', 'hdf5']
-        # for f in input_files:
-        #     ext = f.split('.')[-1]
-        #     if ext in allowedHdfExtensions:
-        #         self.frameGeneratorList.append(HdfFileGenerator(f, args.hdf_dataset, args.hdf_compression_mode))
-        #     else:
-        #         self.frameGeneratorList.append(NumpyFileGenerator(f, args.mmap_mode))
+                if args.file_format == 'hdf':
+                    log.info('Found: %s' % args.file_name)
+                    self.frameGeneratorList.append(HdfFileGenerator(args.file_name, args.hdf_dataset, args.hdf_compression_mode))              
+                else:
+                    log.error('%s is not a supported file format!' % args.file_format)
+                    exit()
 
-        # if not self.frameGeneratorList:
+        if not self.frameGeneratorList:
+            log.error('Found: %d file with extension %s' % (len(input_files), args.file_format))
+            log.error('Use option:--file-format to change file format')
+            exit()
         self.nInputFrames = 0
         for fg in self.frameGeneratorList:
             nInputFrames, self.rows, self.cols, self.dtype, self.compressorName = fg.getFrameInfo()

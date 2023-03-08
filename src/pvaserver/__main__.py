@@ -29,14 +29,19 @@ def run_status(args):
 
 def run_sim(args):
 
-    print(args)
-    exit()
     args.use_sim_data = True
+    run_server(args)
+
+def run_stack(args):
+
+    args.use_sim_data = False
+    args.data_stack = True
     run_server(args)
 
 def run_tomo(args):
 
     args.use_sim_data = False
+    args.data_stack = False # single hdf file
     run_server(args)
 
 def run_server(args):
@@ -64,14 +69,16 @@ def main():
     parser.add_argument('--version', action='version',
                         version='%(prog)s {}'.format(__version__))
 
-    pvaserver_sim_params = config.PVASERVER_SIM_PARAMS
-    pvaserver_tomo_params = config.PVASERVER_TOMO_PARAMS
+    pvaserver_sim_params   = config.PVASERVER_SIM_PARAMS
+    pvaserver_stack_params = config.PVASERVER_STACK_PARAMS
+    pvaserver_tomo_params  = config.PVASERVER_TOMO_PARAMS
     
     cmd_parsers = [
-        ('init',        init,          (),                     "Usage: pvaserver init                - Create configuration file and restore the original default values"),
-        ('sim',         run_sim,       pvaserver_sim_params,   "Usage: pvaserver sim                 - Run the PVA server in simulation mode (-h for more options"),
-        ('tomo',        run_tomo,      pvaserver_tomo_params,  "Usage: pvaserver tomo --file-name    - Run the PVA server in tomography mode (-h for more options"),
-        ('status',      run_status,    pvaserver_tomo_params,  "Usage: pvaserver status              - Show status"),
+        ('init',        init,          (),                     "Usage: pvaserver init                        - Create configuration file and restore the original default values"),
+        ('sim',         run_sim,       pvaserver_sim_params,   "Usage: pvaserver sim                         - Run the PVA server in simulation mode (-h for more options"),
+        ('stack',       run_stack,     pvaserver_stack_params, "Usage: pvaserver stack --file-path /data/    - Run the PVA server loading a stack of images (-h for more options"),
+        ('tomo',        run_tomo,      pvaserver_tomo_params,  "Usage: pvaserver tomo --file-name tomo.h5    - Run the PVA server loading a tomo dataset (-h for more options"),
+        ('status',      run_status,    pvaserver_tomo_params,  "Usage: pvaserver status                      - Show status"),
     ]
 
     subparsers = parser.add_subparsers(title="Commands", metavar='')

@@ -95,11 +95,6 @@ SECTIONS['server'] = {
         'help': 'Disable curses library screen handling. This is enabled by default, except when logging into standard output is turned on.',
         'action': 'store_true'
         },
-    'use-sim-data': {
-        'default': True,
-        'help': 'Set to True when auto generate random data; False when reading data from a directory or a file',
-        },
-
     }
 
 
@@ -132,17 +127,31 @@ SECTIONS['sim'] = {
         },
     }
 
-SECTIONS['file'] = { 
+SECTIONS['single-file'] = { 
     'file-name':{
         'default': None,
         'type': str,
-        'help': "Input file or folder name containing the images to be streamed."
+        'help': "Input file name containing the images to be streamed."
         },
     'file-format': {
         'default': 'hdf',
         'type': str,
         'help': "File format of the file to be read",
-        'choices': ['h5', 'npy', 'tiff'],
+        'choices': ['hdf', ],
+        },    
+    }
+
+SECTIONS['multiple-files'] = { 
+    'file-path':{
+        'default': None,
+        'type': str,
+        'help': "Input folder name containing the images to be streamed."
+        },
+    'file-format': {
+        'default': 'npy',
+        'type': str,
+        'help': "File format of the file to be read",
+        'choices': ['npy', 'tiff'],
         },    
     }
 
@@ -166,10 +175,11 @@ SECTIONS['npy'] = {
         },
     }
 
-PVASERVER_SIM_PARAMS  = ('server', 'sim')
-PVASERVER_TOMO_PARAMS = ('server', 'file', 'hdf', 'npy')
+PVASERVER_SIM_PARAMS   = ('server', 'sim')
+PVASERVER_STACK_PARAMS = ('server', 'multiple-files', 'npy')
+PVASERVER_TOMO_PARAMS  = ('server', 'single-file', 'hdf')
 
-NICE_NAMES = ('General', 'Server', 'Simulation', 'File', 'hdf', 'npy')
+NICE_NAMES = ('General', 'Server', 'Simulation', 'Single File', 'Multiple Files', 'hdf parameters', 'npy parameters')
 
 def get_config_name():
     """Get the command line --config option."""
