@@ -9,10 +9,13 @@ import ctypes.util
 import numpy as np
 import h5py as h5
 
+from pathlib import Path
+
 import pvaccess as pva
 
 from pvaserver import __version__
 from pvaserver import util
+from pvaserver import log
 
 
 class FrameGenerator:
@@ -196,25 +199,57 @@ class AdSimServer:
         self.frameCacheSize = max(args.cache_size, self.MIN_CACHE_SIZE)
         self.nFrames = args.n_frames
 
-        inputFiles = []
-        if args.input_directory is not None:
-            inputFiles = [os.path.join(args.input_directory, f) for f in os.listdir(args.input_directory) if os.path.isfile(os.path.join(args.input_directory, f))]
-        if args.input_file is not None:
-            inputFiles.append(args.input_file)
-        allowedHdfExtensions = ['h5', 'hdf', 'hdf5']
-        for f in inputFiles:
-            ext = f.split('.')[-1]
-            if ext in allowedHdfExtensions:
-                self.frameGeneratorList.append(HdfFileGenerator(f, args.hdf_dataset, args.hdf_compression_mode))
-            else:
-                self.frameGeneratorList.append(NumpyFileGenerator(f, args.input_file))
-
-        if not self.frameGeneratorList:
+        if args.use_sim_data:
             nf = args.n_frames
             if nf <= 0:
                 nf = self.frameCacheSize
             self.frameGeneratorList.append(NumpyRandomGenerator(nf, args.n_x_pixels, args.n_y_pixels, args.datatype, args.minimum, args.maximum))
 
+        else:
+            file_path = Path(args.file_name)
+            input_files = []
+            if file_path.is_file():
+                # input_files.append(args.file_name)
+                if args.file_format == 'hdf':
+                    log.info('Found: %s' % args.file_name)
+                    self.frameGeneratorList.append(HdfFileGenerator(args.file_name, args.hdf_dataset, args.hdf_compression_mode))              
+            elif file_path.is_dir():
+                # Add a trailing slash if missing
+                top = os.path.join(args.file_name, '')
+                if args.file_format == 'hdf':
+                    allowed_extensions = ('.h5', '.hdf', '.hdf5')
+                elif args.file_format == 'npy':
+                    allowed_extensions = ('.npy', '.NPY')
+                input_files = list(filter(lambda x: x.endswith(allowed_extensions), os.listdir(top)))
+                for fname in input_files:
+                    if args.file_format == 'npy':
+                        print(input_files)
+                        # self.frameGeneratorList.append(NumpyFileGenerator(fname, args.mmap_mode))
+                    elif args.file_format == 'tiff':
+                        log.error('tiff not supported yet!')
+                        exit()
+                    else:
+                        print(input_files)
+                        log.error('Usupported file format!')
+                        exit()
+            else:
+                log.error('no valid file found!')
+                exit()
+        # exit()
+        # input_files = []
+        # if args.input_directory is not None:
+        #     input_files = [os.path.join(args.input_directory, f) for f in os.listdir(args.input_directory) if os.path.isfile(os.path.join(args.input_directory, f))]
+        # if args.file_name is not None:
+        #     input_files.append(args.file_name)
+        # allowedHdfExtensions = ['h5', 'hdf', 'hdf5']
+        # for f in input_files:
+        #     ext = f.split('.')[-1]
+        #     if ext in allowedHdfExtensions:
+        #         self.frameGeneratorList.append(HdfFileGenerator(f, args.hdf_dataset, args.hdf_compression_mode))
+        #     else:
+        #         self.frameGeneratorList.append(NumpyFileGenerator(f, args.mmap_mode))
+
+        # if not self.frameGeneratorList:
         self.nInputFrames = 0
         for fg in self.frameGeneratorList:
             nInputFrames, self.rows, self.cols, self.dtype, self.compressorName = fg.getFrameInfo()

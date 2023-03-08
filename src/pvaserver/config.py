@@ -40,62 +40,12 @@ SECTIONS['general'] = {
 
 
 SECTIONS['server'] = { 
-    'input-directory':{
-        'default': None,
-        'type': str,
-        'help': "Directory containing input files to be streamed; if input directory or input file are not provided, random images will be generated."
-        },
-    'input-file':{
-        'default': None,
-        'type': str,
-        'help': "Input file to be streamed; if input directory or input file are not provided, random images will be generated."
-        },
-    'mmap-mode': {
-        'default': False,
-        'help': 'Use NumPy memory map to load the specified input file. This flag typically results in faster startup and lower memory usage for large files.',
-        'action': 'store_true'
-        },
-    'hdf-dataset': {
-        'default': None,
-        'help': 'HDF5 dataset path. This option must be specified if HDF5 files are used as input, but otherwise it is ignored.',
-        },
-    'hdf-compression-mode': {
-        'default': False,
-        'help': 'Use compressed data from HDF5 file. By default, data will be uncompressed before streaming it.',
-        'action': 'store_true'
-        },
     'frame-rate': {
         'default': 20,
         'type': float,
-        'help': "Frames per second (default: 20 fps)"
+        'help': "Frames per second"
         },
-    'n-x-pixels': {
-        'default': 256,
-        'type': int,
-        'help': "Number of pixels in x dimension (default: 256 pixels; does not apply if input file is given)",
-        },
-    'n-y-pixels': {
-        'default': 256,
-        'type': int,
-        'help': "Number of pixels in x dimension (default: 256 pixels; does not apply if input file is given)",
-        },
-    'datatype': {
-        'default': 'uint8',
-        'type': str,
-        'help': "Generated datatype. (default: uint8; does not apply if input file is given)",
-        'choices': ['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'float32', 'float64']
-        },
-    'minimum': {
-        'default': None,
-        'type': float,
-        'help': "Minimum generated value (does not apply if input file is given)"
-        },
-    'maximum': {
-        'default': None,
-        'type': float,
-        'help': "Maximum generated value (does not apply if input file is given)"
-        },
-    'n-frames': {
+   'n-frames': {
         'default': 0,
         'type': int,
         'help': "Number of different frames to generate from the input sources; if set to <= 0, the server will use all images found in input files, or it will generate enough images to fill up the image cache if no input files were specified. If the requested number of input frames is greater than the cache size, the server will stop publishing after exhausting generated frames; otherwise, the generated frames will be constantly recycled and republished.",
@@ -103,17 +53,17 @@ SECTIONS['server'] = {
     'cache-size': {
         'default': 1000,
         'type': int,
-        'help': "Number of different frames to cache (default: 1000); if the cache size is smaller than the number of input frames, the new frames will be constantly regenerated as cached ones are published; otherwise, cached frames will be published over and over again as long as the server is running.",
+        'help': "Number of different frames to cache; if the cache size is smaller than the number of input frames, the new frames will be constantly regenerated as cached ones are published; otherwise, cached frames will be published over and over again as long as the server is running.",
         },
     'runtime': {
         'default': 300,
         'type': float,
-        'help': "Server runtime in seconds (default: 300 seconds)"
+        'help': "Server runtime in seconds"
         },
     'channel-name': {
         'default': 'pvapy:image',
         'type': str,
-        'help': "Server PVA channel name (default: pvapy:image)",
+        'help': "Server PVA channel name",
         },
     'notify-pv': {
         'default': None,
@@ -123,7 +73,7 @@ SECTIONS['server'] = {
     'notify-pv-value': {
         'default': 1,
         'type': str,
-        'help': "Value for the notification channel; for the Area Detector PVA driver PV this should be set to 'Acquire' (default: 1)",
+        'help': "Value for the notification channel; for the Area Detector PVA driver PV this should be set to 'Acquire'",
         },
     'metadata-pv': {
         'default': None,
@@ -133,24 +83,93 @@ SECTIONS['server'] = {
     'start-delay': {
         'default': 10.0,
         'type': float,
-        'help': "Server start delay in seconds (default: 10 seconds)"
+        'help': "Server start delay in seconds"
         },
     'report-period': {
         'default': 1,
         'type': int,
-        'help': "Reporting period for publishing frames; if set to <=0 no frames will be reported as published (default: 1)",
+        'help': "Reporting period for publishing frames; if set to <=0 no frames will be reported as published",
         },
     'disable-curses': {
         'default': False,
         'help': 'Disable curses library screen handling. This is enabled by default, except when logging into standard output is turned on.',
         'action': 'store_true'
         },
+    'use-sim-data': {
+        'default': True,
+        'help': 'Set to True when auto generate random data; False when reading data from a directory or a file',
+        },
 
     }
 
-PVASERVER_PARAMS = ('server', )
 
-NICE_NAMES = ('General', 'Server')
+SECTIONS['sim'] = { 
+    'minimum': {
+        'default': None,
+        'type': float,
+        'help': "Minimum generated value"
+        },
+    'maximum': {
+        'default': None,
+        'type': float,
+        'help': "Maximum generated value"
+        },    
+    'n-x-pixels': {
+        'default': 256,
+        'type': int,
+        'help': "Number of pixels in x dimension",
+        },
+    'n-y-pixels': {
+        'default': 256,
+        'type': int,
+        'help': "Number of pixels in x dimension",
+        },
+    'datatype': {
+        'default': 'uint8',
+        'type': str,
+        'help': "Generated datatype",
+        'choices': ['int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'float32', 'float64']
+        },
+    }
+
+SECTIONS['file'] = { 
+    'file-name':{
+        'default': None,
+        'type': str,
+        'help': "Input file or folder name containing the images to be streamed."
+        },
+    'file-format': {
+        'default': 'hdf',
+        'type': str,
+        'help': "File format of the file to be read",
+        'choices': ['h5', 'npy', 'tiff'],
+        },    
+    }
+
+SECTIONS['hdf'] = { 
+    'hdf-dataset': {
+        'default': '/exchange/data/',
+        'help': 'HDF5 dataset path. This option must be specified if HDF5 files are used as input, but otherwise it is ignored.',
+        },
+    'hdf-compression-mode': {
+        'default': False,
+        'help': 'Use compressed data from HDF5 file. By default, data will be uncompressed before streaming it.',
+        'action': 'store_true'
+        },
+    }
+
+SECTIONS['npy'] = { 
+    'mmap-mode': {
+        'default': False,
+        'help': 'Use NumPy memory map to load the specified input file. This flag typically results in faster startup and lower memory usage for large files.',
+        'action': 'store_true'
+        },
+    }
+
+PVASERVER_SIM_PARAMS  = ('server', 'sim')
+PVASERVER_TOMO_PARAMS = ('server', 'file', 'hdf', 'npy')
+
+NICE_NAMES = ('General', 'Server', 'Simulation', 'File', 'hdf', 'npy')
 
 def get_config_name():
     """Get the command line --config option."""
