@@ -75,9 +75,9 @@ def main():
     
     cmd_parsers = [
         ('init',        init,          (),                     "Usage: pvaserver init                        - Create configuration file and restore the original default values"),
-        ('sim',         run_sim,       pvaserver_sim_params,   "Usage: pvaserver sim                         - Run the PVA server in simulation mode (-h for more options"),
-        ('stack',       run_stack,     pvaserver_stack_params, "Usage: pvaserver stack --file-path /data/    - Run the PVA server loading a stack of images (-h for more options"),
-        ('tomo',        run_tomo,      pvaserver_tomo_params,  "Usage: pvaserver tomo --file-name tomo.h5    - Run the PVA server loading a tomo dataset (-h for more options"),
+        ('sim',         run_sim,       pvaserver_sim_params,   "Usage: pvaserver sim                         - Run the PVA server in simulation mode (-h for more options)"),
+        ('stack',       run_stack,     pvaserver_stack_params, "Usage: pvaserver stack --file-path /data/    - Run the PVA server loading a stack of images from a folder (-h for more options)"),
+        ('tomo',        run_tomo,      pvaserver_tomo_params,  "Usage: pvaserver tomo --file-name tomo.h5    - Run the PVA server loading a tomo dataset (-h for more options)"),
         ('status',      run_status,    pvaserver_tomo_params,  "Usage: pvaserver status                      - Show status"),
     ]
 
