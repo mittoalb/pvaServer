@@ -26,6 +26,7 @@ Usage
 	    status       Usage: pvaserver status - Show status
 
 ::
+
 	$ pvaserver status
 	2023-03-08 15:40:20,962 - Saving log at /home/beams/FAST/logs/pvaserver_2023-03-08_15_40_20.log
 	2023-03-08 15:40:20,962 - pvaserver status start
@@ -70,7 +71,7 @@ To stream tomography data from an hdf file to PVA named pvapy:image
 
 Open ImageJ and start the EPICS NTNDA Viewer:
 
-.. image:: docs/source/img/pva_01.png
+.. image:: docs/source/img/pva_00.png
     :width: 50%
     :align: center
 
