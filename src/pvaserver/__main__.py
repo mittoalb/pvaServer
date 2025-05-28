@@ -2,6 +2,7 @@
 import os
 import time
 import argparse
+import sys
 
 from datetime import datetime
 
@@ -56,7 +57,6 @@ def run_server(args):
 
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', **config.SECTIONS['general']['config'])
     parser.add_argument('--version', action='version',
@@ -65,7 +65,7 @@ def main():
     pvaserver_sim_params   = config.PVASERVER_SIM_PARAMS
     pvaserver_stack_params = config.PVASERVER_STACK_PARAMS
     pvaserver_tomo_params  = config.PVASERVER_TOMO_PARAMS
-    
+
     cmd_parsers = [
         ('init',        init,          (),                     "Usage: pvaserver init                        - Create configuration file and restore the original default values"),
         ('sim',         run_sim,       pvaserver_sim_params,   "Usage: pvaserver sim                         - Run the PVA server in simulation mode (-h for more options)"),
@@ -84,6 +84,12 @@ def main():
 
     args = config.parse_known_args(parser, subparser=True)
 
+    # === Check for logs_home ===
+    if not hasattr(args, 'logs_home'):
+        parser.print_help()
+        log.error("Missing required arguments or subcommand (e.g., sim/stack/tomo).")
+        sys.exit(1)
+
     # create logger
     logs_home = args.logs_home
 
@@ -92,7 +98,7 @@ def main():
         os.makedirs(logs_home)
 
     lfname = os.path.join(logs_home, 'pvaserver_' + datetime.strftime(datetime.now(), "%Y-%m-%d_%H_%M_%S") + '.log')
- 
+
     log.setup_custom_logger(lfname)
     log.info("Saving log at %s" % lfname)
 
@@ -101,6 +107,7 @@ def main():
     except RuntimeError as e:
         log.error(str(e))
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
