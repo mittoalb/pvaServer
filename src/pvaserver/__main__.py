@@ -85,9 +85,9 @@ def main():
     args = config.parse_known_args(parser, subparser=True)
 
     # === Check for logs_home ===
-    if not hasattr(args, 'logs_home'):
+    if not hasattr(args, '_func'):
         parser.print_help()
-        log.error("Missing required arguments or subcommand (e.g., sim/stack/tomo).")
+        log.error("No command provided. Use one of: init, sim, stack, tomo, status.")
         sys.exit(1)
 
     # create logger
