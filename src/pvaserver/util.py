@@ -5,6 +5,7 @@ AD Image Utility class
 import time
 import numpy as np
 import pvaccess as pva
+from functools import wraps
 
 class AdImageUtility:
     '''
@@ -454,3 +455,64 @@ class IntWithUnits(int):
 
     def __str__(self):
         return self.__repr__()
+
+
+
+
+def ntnda_stream(pv_name: str, *, start_uid: int = 1):
+    """
+    Decorator that publishes the result of a function returning a 2-D NumPy array
+    to a PVAccess NTNDArray process variable (PV).
+
+    Parameters:
+    ----------
+    pv_name : str
+        The name of the NTNDArray PV to publish the images to.
+    start_uid : int, optional
+        Starting unique identifier (UID) for NTNDArray frames. Defaults to 1.
+
+    Returns:
+    -------
+    decorator : Callable
+        A decorator function that wraps another function to enable PV streaming.
+
+    Notes:
+    -----
+    - The decorated function must return a 2D NumPy array (grayscale image).
+    - The image is wrapped into an NTNDArray structure and published to the PV.
+    - UID is incremented with each call to ensure unique frame IDs.
+    - Uses `AdImageUtility` for NTNDArray wrapping and updating.
+
+    Example:
+    -------
+    @ntnda_stream('SIM:IMG')
+    def generate_image():
+        return np.random.randint(0, 255, (256, 256), dtype=np.uint8)
+    """
+    dummy = np.zeros((1, 1), dtype=np.uint8)
+    nt = AdImageUtility.generateNtNdArray2D(0, dummy)
+
+    server = pva.PvaServer()
+    server.addRecord(pv_name, nt)
+    uid = start_uid
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            nonlocal uid, nt
+            frame = np.asarray(func(*args, **kwargs))
+            if frame.ndim != 2:
+                raise ValueError(f"Expected 2-D image, got shape {frame.shape}")
+
+            # Replace the image in the NTNDArray structure
+            AdImageUtility.replaceNtNdArrayImage2D(nt, uid, frame)
+
+            # Update the server PV with the new image
+            server.update(nt)
+
+            # Increment the frame UID
+            uid += 1
+
+            return frame
+        return wrapper
+    return decorator
